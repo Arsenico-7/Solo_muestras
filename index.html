@@ -3,309 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entraînement Messages Météo OMM</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>MeteoTrainer Pro - OMM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
+<body class="bg-slate-50">
     <div id="root"></div>
-    
+
     <script type="text/babel">
-        const { useState } = React;
-
-        // Icônes SVG simples pour remplacer lucide-react
-        const RefreshCw = ({ size = 18 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
-            </svg>
-        );
-
-        const Check = ({ size = 20, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-                <path d="M20 6L9 17l-5-5"/>
-            </svg>
-        );
-
-        const HelpCircle = ({ size = 20, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
-            </svg>
-        );
+        const { useState, useEffect } = React;
 
         const MeteoTrainer = () => {
             const [selectedType, setSelectedType] = useState('SYNOP');
+            const [selectedMode, setSelectedMode] = useState('decode');
             const [currentExercise, setCurrentExercise] = useState(null);
             const [userAnswers, setUserAnswers] = useState({});
             const [showSolution, setShowSolution] = useState(false);
             const [score, setScore] = useState({ correct: 0, total: 0 });
 
             const exercises = {
-                SYNOP: [
-                    {
-                        message: "AAXX 18121 60715 46/// 72508 10227 20193 39856 40147 52035 60012 70282 8863/=",
-                        questions: [
-                            { q: "Quelle est l'heure d'observation (UTC)?", a: "12h00 UTC le 18", hint: "Groupe YYGGi : 18121" },
-                            { q: "Quel est l'indicatif de la station?", a: "60715", hint: "Groupe IIiii" },
-                            { q: "Quelle est la température (°C)?", a: "22.7°C", hint: "Groupe 1SnTTT : 10227" },
-                            { q: "Quelle est la température du point de rosée (°C)?", a: "19.3°C", hint: "Groupe 2SnTdTdTd : 20193" },
-                            { q: "Quelle est la pression au niveau de la station (hPa)?", a: "985.6 hPa", hint: "Groupe 3P0P0P0P0 : 39856" }
-                        ]
-                    },
-                    {
-                        message: "AAXX 06061 60351 16/// 83212 10152 21063 30256 40324 58020=",
-                        questions: [
-                            { q: "Quelle est l'heure d'observation (UTC)?", a: "06h00 UTC le 06", hint: "Groupe YYGGi : 06061" },
-                            { q: "Quel est l'indicatif de la station?", a: "60351", hint: "Groupe IIiii" },
-                            { q: "Direction et vitesse du vent?", a: "320°, 12 nœuds", hint: "Groupe Nddff : 83212" },
-                            { q: "Température (°C)?", a: "15.2°C", hint: "Groupe 1SnTTT : 10152" },
-                            { q: "Pression réduite au niveau de la mer (hPa)?", a: "1025.6 hPa", hint: "Groupe 3P0P0P0P0 : 30256" }
-                        ]
-                    }
-                ],
-                SHIP: [
-                    {
-                        message: "BBXX SHIP 18064 99123 52345 41596 10156 21098 30124 40258 52002 70511=",
-                        questions: [
-                            { q: "Type de message?", a: "SHIP (observation de navire)", hint: "Identificateur BBXX" },
-                            { q: "Heure d'observation?", a: "06h00 UTC le 18", hint: "Groupe YYGGi : 18064" },
-                            { q: "Position du navire (quadrant)?", a: "Quadrant 99", hint: "Groupe 99LaLaLa" },
-                            { q: "Latitude approximative?", a: "12.3°N", hint: "99123 : LaLaLa = 123 → 12.3°" },
-                            { q: "Température de l'air (°C)?", a: "15.6°C", hint: "Groupe 1SnTTT : 10156" }
-                        ]
-                    }
-                ],
-                'SYNOP MOBIL': [
-                    {
-                        message: "AAXX 12121 ///// 46512 82510 10189 20156 30045 40189 58002=",
-                        questions: [
-                            { q: "Pourquoi l'indicatif est-il /////?", a: "Station mobile, position variable", hint: "Les stations mobiles n'ont pas d'indicatif fixe" },
-                            { q: "Heure d'observation?", a: "12h00 UTC le 12", hint: "Groupe YYGGi : 12121" },
-                            { q: "Vent: direction et vitesse?", a: "250°, 10 nœuds", hint: "Groupe Nddff : 82510" },
-                            { q: "Température (°C)?", a: "18.9°C", hint: "Groupe 1SnTTT : 10189" }
-                        ]
-                    }
-                ],
-                'TEMP (Parties A/B/C/D)': [
-                    {
-                        message: "TTAA 70121 10393\n99012 24563 12012\n00995 23555 10010\n85440 16950 32022\n70925 09145 31540=",
-                        questions: [
-                            { q: "Quelle partie du TEMP?", a: "Partie A (niveaux standards)", hint: "TTAA = Partie A" },
-                            { q: "Heure d'observation?", a: "12h00 UTC le 07", hint: "Groupe YYGGi : 70121" },
-                            { q: "Indicatif de la station?", a: "10393", hint: "Groupe IIiii" },
-                            { q: "Pression au sol (hPa)?", a: "1001.2 hPa", hint: "99PsPsPs : 99012 → 1001.2" },
-                            { q: "Température au niveau 850 hPa (°C)?", a: "-16.0°C", hint: "85440 16950 : TTT=440, Sn=1 → -16.0" }
-                        ]
-                    },
-                    {
-                        message: "TTBB 70121 10393\n00121 15035\n92245 13547\n85335 08555=",
-                        questions: [
-                            { q: "Quelle partie du TEMP?", a: "Partie B (niveaux significatifs température)", hint: "TTBB = Partie B" },
-                            { q: "Premier niveau significatif (hPa)?", a: "1012 hPa", hint: "nPnPnPn : 00121 → 1012.1 hPa" },
-                            { q: "Ces données concernent quoi?", a: "Niveaux où T change de tendance", hint: "Partie B = niveaux significatifs pour température" }
-                        ]
-                    },
-                    {
-                        message: "TTCC 70121 10393\n70925 30909 09540\n50559 32515 24535\n30893 33033 52030=",
-                        questions: [
-                            { q: "Quelle partie du TEMP?", a: "Partie C (niveaux standards altitude)", hint: "TTCC = Partie C" },
-                            { q: "Ces données sont pour quelle tropopause?", a: "Première tropopause", hint: "Partie C = niveaux standards incluant tropopause" }
-                        ]
-                    },
-                    {
-                        message: "TTDD 70121 10393\n51515 31530\n44448 32545\n33350 33560=",
-                        questions: [
-                            { q: "Quelle partie du TEMP?", a: "Partie D (niveaux significatifs vent)", hint: "TTDD = Partie D" },
-                            { q: "Ces données concernent quoi?", a: "Niveaux où le vent change significativement", hint: "Partie D = niveaux significatifs pour le vent" }
-                        ]
-                    }
-                ],
-                'PILOT (Parties A/B/C/D)': [
-                    {
-                        message: "PPAA 06121 10393\n99012 24512\n00995 23510\n92850 32520\n85700 31535=",
-                        questions: [
-                            { q: "Quelle partie du PILOT?", a: "Partie A (niveaux standards)", hint: "PPAA = Partie A" },
-                            { q: "Heure d'observation?", a: "12h00 UTC le 06", hint: "Groupe YYGGi : 06121" },
-                            { q: "Vent au sol: direction et vitesse?", a: "245°, 12 nœuds", hint: "99PsPsPs ddfff : 99012 24512" },
-                            { q: "Vent à 850 hPa?", a: "315°, 35 nœuds", hint: "85700 31535" }
-                        ]
-                    },
-                    {
-                        message: "PPBB 06121 10393\n00995 23510\n92840 32522\n88770 31040\n85700 31535=",
-                        questions: [
-                            { q: "Quelle partie du PILOT?", a: "Partie B (niveaux significatifs)", hint: "PPBB = Partie B" },
-                            { q: "Ces niveaux représentent quoi?", a: "Niveaux où le vent change significativement", hint: "Partie B = changements de vent" }
-                        ]
-                    },
-                    {
-                        message: "PPCC 06121 10393\n70925 30540\n50560 32035\n40670 32540=",
-                        questions: [
-                            { q: "Quelle partie du PILOT?", a: "Partie C (niveaux standards altitude)", hint: "PPCC = Partie C" },
-                            { q: "Vent à 500 hPa?", a: "320°, 35 nœuds", hint: "50560 32035" }
-                        ]
-                    },
-                    {
-                        message: "PPDD 06121 10393\n51515 31530\n44440 32545\n33350 33055=",
-                        questions: [
-                            { q: "Quelle partie du PILOT?", a: "Partie D (niveaux significatifs altitude)", hint: "PPDD = Partie D" },
-                            { q: "À quoi servent ces données?", a: "Compléter partie C avec niveaux où vent change", hint: "Partie D = niveaux significatifs en altitude" }
-                        ]
-                    }
-                ]
+                SYNOP: {
+                    decode: [
+                        {
+                            message: "AAXX 18121 60715 46/// 72508 10227 20193 39856 40147 52035 60012 846//=",
+                            questions: [
+                                { q: "Heure d'observation (UTC)?", a: "12h00 UTC le 18", hint: "Groupe YYGGi : 18121" },
+                                { q: "Indicatif station?", a: "60715", hint: "Groupe IIiii" },
+                                { q: "Nébulosité totale (octas)?", a: "4 octas", hint: "N dans Nddff" },
+                                { q: "Direction du vent?", a: "250°", hint: "dd=25 (x10)" },
+                                { q: "Vitesse du vent?", a: "8 nœuds", hint: "ff=08" },
+                                { q: "Température air (°C)?", a: "22.7°C", hint: "1SnTTT : 10227" },
+                                { q: "Point de rosée (°C)?", a: "19.3°C", hint: "2SnTdTdTd : 20193" },
+                                { q: "Pression station (hPa)?", a: "985.6 hPa", hint: "3P0P0P0P0" },
+                                { q: "Pression niveau mer (hPa)?", a: "1014.7 hPa", hint: "4PPPP" },
+                                { q: "Précipitations 6h (mm)?", a: "1.2 mm", hint: "6RRRtR" }
+                            ]
+                        }
+                    ],
+                    encode: [
+                        {
+                            scenario: "Station 60715, le 18 à 12h UTC. N=4, Vent 250°/08kt, T=22.7°C, Td=19.3°C, QFE=985.6, QFF=1014.7, RR=1.2mm/6h, Tendance +3.5hPa.",
+                            questions: [
+                                { q: "Section 0 (YYGGi)", a: "18121", hint: "Jour 18, 12h, i=1" },
+                                { q: "Section 1 (IIiii)", a: "60715", hint: "Indicatif station" },
+                                { q: "Groupe Vent (Nddff)", a: "42508", hint: "N=4, dd=25, ff=08" },
+                                { q: "Groupe Température (1SnTTT)", a: "10227", hint: "T=22.7 positive" },
+                                { q: "Groupe Rosée (2SnTdTdTd)", a: "20193", hint: "Td=19.3 positive" },
+                                { q: "Groupe Pression Station (3P0P0P0P0)", a: "39856", hint: "Omettre le 1er chiffre" },
+                                { q: "Groupe Pression Mer (4PPPP)", a: "40147", hint: "Omettre le 1er chiffre" },
+                                { q: "Groupe Tendance (5appp)", a: "52035", hint: "Hausse continue (a=2), 3.5hPa" },
+                                { q: "Groupe Précipitations (6RRRtR)", a: "60012", hint: "RRR=012, tR=1 (6h)" },
+                                { q: "Groupe Nuages (8NhCLCMCH)", a: "846//", hint: "N=4, h=6, nuages indet." }
+                            ]
+                        }
+                    ]
+                }
             };
 
             const generateExercise = () => {
-                const exList = exercises[selectedType];
-                const ex = exList[Math.floor(Math.random() * exList.length)];
+                const modeData = exercises[selectedType][selectedMode];
+                const ex = modeData[Math.floor(Math.random() * modeData.length)];
                 setCurrentExercise(ex);
                 setUserAnswers({});
                 setShowSolution(false);
             };
 
             const checkAnswers = () => {
-                if (!currentExercise) return;
-                
-                let correct = 0;
+                let correctCount = 0;
                 currentExercise.questions.forEach((q, idx) => {
-                    const userAns = (userAnswers[idx] || '').toLowerCase().trim();
-                    const correctAns = q.a.toLowerCase().trim();
-                    
-                    if (userAns === correctAns || (correctAns.includes(userAns) && userAns.length > 3)) {
-                        correct++;
+                    const userVal = (userAnswers[idx] || '').toLowerCase().trim().replace(/\s/g, '');
+                    const correctVal = q.a.toLowerCase().trim().replace(/\s/g, '');
+                    if (userVal === correctVal || (correctVal.includes(userVal) && userVal.length > 2)) {
+                        correctCount++;
                     }
                 });
-                
-                setScore({ correct: score.correct + correct, total: score.total + currentExercise.questions.length });
+                setScore(s => ({ correct: s.correct + correctCount, total: s.total + 10 }));
                 setShowSolution(true);
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                            <h1 className="text-3xl font-bold text-indigo-900 mb-2">
-                                Entraînement Messages Météo OMM
-                            </h1>
-                            <p className="text-gray-600 mb-4">
-                                Prépare-toi pour ton examen avec des exercices de décodage
-                            </p>
-                            
-                            <div className="flex items-center gap-4 mb-4">
-                                <span className="font-semibold text-gray-700">Type de message:</span>
-                                <select 
-                                    value={selectedType}
-                                    onChange={(e) => {
-                                        setSelectedType(e.target.value);
-                                        setCurrentExercise(null);
-                                        setUserAnswers({});
-                                        setShowSolution(false);
-                                    }}
-                                    className="border-2 border-indigo-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500"
-                                >
-                                    <option>SYNOP</option>
-                                    <option>SHIP</option>
-                                    <option>SYNOP MOBIL</option>
-                                    <option>TEMP (Parties A/B/C/D)</option>
-                                    <option>PILOT (Parties A/B/C/D)</option>
-                                </select>
-                                
-                                <button
-                                    onClick={generateExercise}
-                                    className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                                >
-                                    <RefreshCw size={18} />
-                                    Nouvel exercice
-                                </button>
-                            </div>
-
-                            <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded">
-                                <p className="text-sm text-indigo-900">
-                                    <strong>Score:</strong> {score.correct} / {score.total} réponses correctes
-                                    {score.total > 0 && ` (${Math.round(score.correct / score.total * 100)}%)`}
-                                </p>
-                            </div>
+                <div className="min-h-screen p-4 md:p-8">
+                    <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                        <div className="bg-indigo-700 p-6 text-white text-center">
+                            <h1 className="text-3xl font-bold uppercase tracking-tighter">MeteoTrainer Pro</h1>
+                            <p className="opacity-80 mt-1">Maîtrisez les codes OMM (SYNOP, TEMP, PILOT)</p>
                         </div>
 
-                        {currentExercise && (
-                            <div className="bg-white rounded-lg shadow-lg p-6">
-                                <div className="mb-6">
-                                    <h2 className="text-xl font-bold text-gray-800 mb-2">Message à décoder:</h2>
-                                    <div className="bg-gray-100 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap border-2 border-gray-300">
-                                        {currentExercise.message}
+                        <div className="p-6">
+                            <div className="flex flex-wrap gap-4 justify-center mb-8">
+                                <select 
+                                    className="border-2 border-slate-200 rounded-lg px-4 py-2 outline-none focus:border-indigo-500"
+                                    value={selectedType} onChange={(e) => setSelectedType(e.target.value)}
+                                >
+                                    <option>SYNOP</option>
+                                </select>
+                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    <button onClick={() => setSelectedMode('decode')} className={`px-4 py-1 rounded-md ${selectedMode === 'decode' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Décodage</button>
+                                    <button onClick={() => setSelectedMode('encode')} className={`px-4 py-1 rounded-md ${selectedMode === 'encode' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>Encodage</button>
+                                </div>
+                                <button onClick={generateExercise} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition">Nouvel Exercice</button>
+                            </div>
+
+                            {currentExercise ? (
+                                <div className="space-y-6">
+                                    <div className="bg-slate-900 text-indigo-300 p-6 rounded-xl font-mono text-lg shadow-inner border-l-4 border-indigo-500">
+                                        <div className="text-xs text-slate-500 mb-2 uppercase tracking-widest">Données de l'exercice</div>
+                                        {selectedMode === 'decode' ? currentExercise.message : currentExercise.scenario}
+                                    </div>
+
+                                    <div className="grid gap-4">
+                                        {currentExercise.questions.map((q, idx) => (
+                                            <div key={idx} className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                                                <label className="block text-slate-700 font-semibold mb-2">{idx + 1}. {q.q}</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full border-2 border-slate-200 rounded-lg p-2 focus:border-indigo-500 outline-none"
+                                                    value={userAnswers[idx] || ''}
+                                                    onChange={(e) => setUserAnswers({...userAnswers, [idx]: e.target.value})}
+                                                    disabled={showSolution}
+                                                />
+                                                {showSolution && (
+                                                    <div className="mt-2 text-sm">
+                                                        <div className="text-green-600 font-bold">✓ {q.a}</div>
+                                                        <div className="text-blue-500 italic text-xs">Aide: {q.hint}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex flex-col items-center gap-4 py-6 border-t">
+                                        {!showSolution ? (
+                                            <button onClick={checkAnswers} className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg">Vérifier les 10 réponses</button>
+                                        ) : (
+                                            <div className="text-center">
+                                                <div className="text-2xl font-bold text-indigo-900 mb-4">Score : {score.correct} / {score.total}</div>
+                                                <button onClick={generateExercise} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-900">Continuer l'entraînement</button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                <div className="space-y-4 mb-6">
-                                    {currentExercise.questions.map((q, idx) => (
-                                        <div key={idx} className="border-2 border-gray-200 rounded-lg p-4">
-                                            <div className="flex items-start gap-2 mb-2">
-                                                <span className="font-semibold text-indigo-700 mt-1">Q{idx + 1}.</span>
-                                                <p className="font-semibold text-gray-800 flex-1">{q.q}</p>
-                                            </div>
-                                            
-                                            <input
-                                                type="text"
-                                                value={userAnswers[idx] || ''}
-                                                onChange={(e) => setUserAnswers({...userAnswers, [idx]: e.target.value})}
-                                                placeholder="Ta réponse..."
-                                                disabled={showSolution}
-                                                className="w-full border-2 border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-indigo-500 disabled:bg-gray-100"
-                                            />
-                                            
-                                            {showSolution && (
-                                                <div className="mt-3 space-y-2">
-                                                    <div className="flex items-start gap-2 bg-green-50 border-l-4 border-green-500 p-3 rounded">
-                                                        <Check className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                                                        <div>
-                                                            <p className="font-semibold text-green-800">Réponse correcte:</p>
-                                                            <p className="text-green-700">{q.a}</p>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="flex items-start gap-2 bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
-                                                        <HelpCircle className="text-blue-600 flex-shrink-0 mt-1" size={20} />
-                                                        <div>
-                                                            <p className="font-semibold text-blue-800">Indice:</p>
-                                                            <p className="text-blue-700">{q.hint}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {!showSolution ? (
-                                    <button
-                                        onClick={checkAnswers}
-                                        className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                                    >
-                                        Vérifier mes réponses
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={generateExercise}
-                                        className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <RefreshCw size={20} />
-                                        Exercice suivant
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {!currentExercise && (
-                            <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-                                <p className="text-gray-500 text-lg mb-4">
-                                    Clique sur "Nouvel exercice" pour commencer !
-                                </p>
-                                <p className="text-sm text-gray-400">
-                                    Sélectionne d'abord le type de message que tu veux pratiquer
-                                </p>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="text-center py-20 text-slate-400">Sélectionnez un mode et cliquez sur "Nouvel Exercice"</div>
+                            )}
+                        </div>
                     </div>
                 </div>
             );
