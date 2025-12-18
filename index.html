@@ -1,0 +1,280 @@
+import React, { useState } from 'react';
+import { RefreshCw, Check, X, HelpCircle } from 'lucide-react';
+
+const MeteoTrainer = () => {
+  const [selectedType, setSelectedType] = useState('SYNOP');
+  const [currentExercise, setCurrentExercise] = useState(null);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [showSolution, setShowSolution] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+
+  const exercises = {
+    SYNOP: [
+      {
+        message: "AAXX 18121 60715 46/// 72508 10227 20193 39856 40147 52035 60012 70282 8863/=",
+        questions: [
+          { q: "Quelle est l'heure d'observation (UTC)?", a: "12h00 UTC le 18", hint: "Groupe YYGGi : 18121" },
+          { q: "Quel est l'indicatif de la station?", a: "60715", hint: "Groupe IIiii" },
+          { q: "Quelle est la température (°C)?", a: "22.7°C", hint: "Groupe 1SnTTT : 10227" },
+          { q: "Quelle est la température du point de rosée (°C)?", a: "19.3°C", hint: "Groupe 2SnTdTdTd : 20193" },
+          { q: "Quelle est la pression au niveau de la station (hPa)?", a: "985.6 hPa", hint: "Groupe 3P0P0P0P0 : 39856" }
+        ]
+      },
+      {
+        message: "AAXX 06061 60351 16/// 83212 10152 21063 30256 40324 58020=",
+        questions: [
+          { q: "Quelle est l'heure d'observation (UTC)?", a: "06h00 UTC le 06", hint: "Groupe YYGGi : 06061" },
+          { q: "Quel est l'indicatif de la station?", a: "60351", hint: "Groupe IIiii" },
+          { q: "Direction et vitesse du vent?", a: "320°, 12 nœuds", hint: "Groupe Nddff : 83212" },
+          { q: "Température (°C)?", a: "15.2°C", hint: "Groupe 1SnTTT : 10152" },
+          { q: "Pression réduite au niveau de la mer (hPa)?", a: "1025.6 hPa", hint: "Groupe 3P0P0P0P0 : 30256" }
+        ]
+      }
+    ],
+    SHIP: [
+      {
+        message: "BBXX SHIP 18064 99123 52345 41596 10156 21098 30124 40258 52002 70511=",
+        questions: [
+          { q: "Type de message?", a: "SHIP (observation de navire)", hint: "Identificateur BBXX" },
+          { q: "Heure d'observation?", a: "06h00 UTC le 18", hint: "Groupe YYGGi : 18064" },
+          { q: "Position du navire (quadrant)?", a: "Quadrant 99", hint: "Groupe 99LaLaLa" },
+          { q: "Latitude approximative?", a: "12.3°N", hint: "99123 : LaLaLa = 123 → 12.3°" },
+          { q: "Température de l'air (°C)?", a: "15.6°C", hint: "Groupe 1SnTTT : 10156" }
+        ]
+      }
+    ],
+    'SYNOP MOBIL': [
+      {
+        message: "AAXX 12121 ///// 46512 82510 10189 20156 30045 40189 58002=",
+        questions: [
+          { q: "Pourquoi l'indicatif est-il /////?", a: "Station mobile, position variable", hint: "Les stations mobiles n'ont pas d'indicatif fixe" },
+          { q: "Heure d'observation?", a: "12h00 UTC le 12", hint: "Groupe YYGGi : 12121" },
+          { q: "Vent: direction et vitesse?", a: "250°, 10 nœuds", hint: "Groupe Nddff : 82510" },
+          { q: "Température (°C)?", a: "18.9°C", hint: "Groupe 1SnTTT : 10189" }
+        ]
+      }
+    ],
+    'TEMP (Parties A/B/C/D)': [
+      {
+        message: "TTAA 70121 10393\n99012 24563 12012\n00995 23555 10010\n85440 16950 32022\n70925 09145 31540=",
+        questions: [
+          { q: "Quelle partie du TEMP?", a: "Partie A (niveaux standards)", hint: "TTAA = Partie A" },
+          { q: "Heure d'observation?", a: "12h00 UTC le 07", hint: "Groupe YYGGi : 70121" },
+          { q: "Indicatif de la station?", a: "10393", hint: "Groupe IIiii" },
+          { q: "Pression au sol (hPa)?", a: "1001.2 hPa", hint: "99PsPsPs : 99012 → 1001.2" },
+          { q: "Température au niveau 850 hPa (°C)?", a: "-16.0°C", hint: "85440 16950 : TTT=440, Sn=1 → -16.0" }
+        ]
+      },
+      {
+        message: "TTBB 70121 10393\n00121 15035\n92245 13547\n85335 08555=",
+        questions: [
+          { q: "Quelle partie du TEMP?", a: "Partie B (niveaux significatifs température)", hint: "TTBB = Partie B" },
+          { q: "Premier niveau significatif (hPa)?", a: "1012 hPa", hint: "nPnPnPn : 00121 → 1012.1 hPa" },
+          { q: "Ces données concernent quoi?", a: "Niveaux où T change de tendance", hint: "Partie B = niveaux significatifs pour température" }
+        ]
+      },
+      {
+        message: "TTCC 70121 10393\n70925 30909 09540\n50559 32515 24535\n30893 33033 52030=",
+        questions: [
+          { q: "Quelle partie du TEMP?", a: "Partie C (niveaux standards altitude)", hint: "TTCC = Partie C" },
+          { q: "Ces données sont pour quelle tropopause?", a: "Première tropopause", hint: "Partie C = niveaux standards incluant tropopause" }
+        ]
+      },
+      {
+        message: "TTDD 70121 10393\n51515 31530\n44448 32545\n33350 33560=",
+        questions: [
+          { q: "Quelle partie du TEMP?", a: "Partie D (niveaux significatifs vent)", hint: "TTDD = Partie D" },
+          { q: "Ces données concernent quoi?", a: "Niveaux où le vent change significativement", hint: "Partie D = niveaux significatifs pour le vent" }
+        ]
+      }
+    ],
+    'PILOT (Parties A/B/C/D)': [
+      {
+        message: "PPAA 06121 10393\n99012 24512\n00995 23510\n92850 32520\n85700 31535=",
+        questions: [
+          { q: "Quelle partie du PILOT?", a: "Partie A (niveaux standards)", hint: "PPAA = Partie A" },
+          { q: "Heure d'observation?", a: "12h00 UTC le 06", hint: "Groupe YYGGi : 06121" },
+          { q: "Vent au sol: direction et vitesse?", a: "245°, 12 nœuds", hint: "99PsPsPs ddfff : 99012 24512" },
+          { q: "Vent à 850 hPa?", a: "315°, 35 nœuds", hint: "85700 31535" }
+        ]
+      },
+      {
+        message: "PPBB 06121 10393\n00995 23510\n92840 32522\n88770 31040\n85700 31535=",
+        questions: [
+          { q: "Quelle partie du PILOT?", a: "Partie B (niveaux significatifs)", hint: "PPBB = Partie B" },
+          { q: "Ces niveaux représentent quoi?", a: "Niveaux où le vent change significativement", hint: "Partie B = changements de vent" }
+        ]
+      },
+      {
+        message: "PPCC 06121 10393\n70925 30540\n50560 32035\n40670 32540=",
+        questions: [
+          { q: "Quelle partie du PILOT?", a: "Partie C (niveaux standards altitude)", hint: "PPCC = Partie C" },
+          { q: "Vent à 500 hPa?", a: "320°, 35 nœuds", hint: "50560 32035" }
+        ]
+      },
+      {
+        message: "PPDD 06121 10393\n51515 31530\n44440 32545\n33350 33055=",
+        questions: [
+          { q: "Quelle partie du PILOT?", a: "Partie D (niveaux significatifs altitude)", hint: "PPDD = Partie D" },
+          { q: "À quoi servent ces données?", a: "Compléter partie C avec niveaux où vent change", hint: "Partie D = niveaux significatifs en altitude" }
+        ]
+      }
+    ]
+  };
+
+  const generateExercise = () => {
+    const exList = exercises[selectedType];
+    const ex = exList[Math.floor(Math.random() * exList.length)];
+    setCurrentExercise(ex);
+    setUserAnswers({});
+    setShowSolution(false);
+  };
+
+  const checkAnswers = () => {
+    if (!currentExercise) return;
+    
+    let correct = 0;
+    currentExercise.questions.forEach((q, idx) => {
+      const userAns = (userAnswers[idx] || '').toLowerCase().trim();
+      const correctAns = q.a.toLowerCase().trim();
+      
+      if (userAns === correctAns || correctAns.includes(userAns) && userAns.length > 3) {
+        correct++;
+      }
+    });
+    
+    setScore({ correct: score.correct + correct, total: score.total + currentExercise.questions.length });
+    setShowSolution(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h1 className="text-3xl font-bold text-indigo-900 mb-2">
+            Entraînement Messages Météo OMM
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Prépare-toi pour ton examen avec des exercices de décodage
+          </p>
+          
+          <div className="flex items-center gap-4 mb-4">
+            <span className="font-semibold text-gray-700">Type de message:</span>
+            <select 
+              value={selectedType}
+              onChange={(e) => {
+                setSelectedType(e.target.value);
+                setCurrentExercise(null);
+                setUserAnswers({});
+                setShowSolution(false);
+              }}
+              className="border-2 border-indigo-300 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500"
+            >
+              <option>SYNOP</option>
+              <option>SHIP</option>
+              <option>SYNOP MOBIL</option>
+              <option>TEMP (Parties A/B/C/D)</option>
+              <option>PILOT (Parties A/B/C/D)</option>
+            </select>
+            
+            <button
+              onClick={generateExercise}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <RefreshCw size={18} />
+              Nouvel exercice
+            </button>
+          </div>
+
+          <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded">
+            <p className="text-sm text-indigo-900">
+              <strong>Score:</strong> {score.correct} / {score.total} réponses correctes
+              {score.total > 0 && ` (${Math.round(score.correct / score.total * 100)}%)`}
+            </p>
+          </div>
+        </div>
+
+        {currentExercise && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Message à décoder:</h2>
+              <div className="bg-gray-100 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap border-2 border-gray-300">
+                {currentExercise.message}
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {currentExercise.questions.map((q, idx) => (
+                <div key={idx} className="border-2 border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="font-semibold text-indigo-700 mt-1">Q{idx + 1}.</span>
+                    <p className="font-semibold text-gray-800 flex-1">{q.q}</p>
+                  </div>
+                  
+                  <input
+                    type="text"
+                    value={userAnswers[idx] || ''}
+                    onChange={(e) => setUserAnswers({...userAnswers, [idx]: e.target.value})}
+                    placeholder="Ta réponse..."
+                    disabled={showSolution}
+                    className="w-full border-2 border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-indigo-500 disabled:bg-gray-100"
+                  />
+                  
+                  {showSolution && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-start gap-2 bg-green-50 border-l-4 border-green-500 p-3 rounded">
+                        <Check className="text-green-600 flex-shrink-0 mt-1" size={20} />
+                        <div>
+                          <p className="font-semibold text-green-800">Réponse correcte:</p>
+                          <p className="text-green-700">{q.a}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2 bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+                        <HelpCircle className="text-blue-600 flex-shrink-0 mt-1" size={20} />
+                        <div>
+                          <p className="font-semibold text-blue-800">Indice:</p>
+                          <p className="text-blue-700">{q.hint}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {!showSolution ? (
+              <button
+                onClick={checkAnswers}
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              >
+                Vérifier mes réponses
+              </button>
+            ) : (
+              <button
+                onClick={generateExercise}
+                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw size={20} />
+                Exercice suivant
+              </button>
+            )}
+          </div>
+        )}
+
+        {!currentExercise && (
+          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+            <p className="text-gray-500 text-lg mb-4">
+              Clique sur "Nouvel exercice" pour commencer !
+            </p>
+            <p className="text-sm text-gray-400">
+              Sélectionne d'abord le type de message que tu veux pratiquer
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MeteoTrainer;
