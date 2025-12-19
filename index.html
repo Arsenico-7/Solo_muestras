@@ -1,217 +1,135 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeteoTrainer Pro - OMM Master</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>CREADUCTIVIDAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS: El diseño de la página */
+        :root {
+            --primary: #6e8efb;
+            --secondary: #a777e3;
+            --text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%; /* Imagen circular */
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: none; /* La ocultamos al principio para la sorpresa */
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Animación para cuando aparezca la imagen */
+        .fade-in {
+            animation: fadeIn 1.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
-    <div id="root"></div>
+<body>
 
-    <script type="text/babel">
-        const { useState } = React;
+    <div class="card">
+        <h1>¿Quién es el amor de mi vida?</h1>
+        
+        <img src="https://i.ibb.co/rKsvqFMG/Whats-App-Image-2025-10-08-at-23-09-40.jpg" 
+             id="loveImage" 
+             class="profile-img" 
+             alt="El amor de mi vida">
 
-        const db = {
-            'SYNOP': {
-                encode: [
-                    { s: "Station 60715, le 12 à 18h UTC. N=5, Vent 320/12kt, T=15.2, Td=10.5, QFE=1005.2, QFF=1016.8, RR=2.5mm/6h, Tendance -1.2hPa.", qs: [
-                        { q: "Groupe 0 (YYGGi)", a: "12181", h: "12, 18h, i=1" }, { q: "Section 1 (IIiii)", a: "60715", h: "Station" },
-                        { q: "Vent (Nddff)", a: "53212", h: "N=5, dd=32, ff=12" }, { q: "Temp (1SnTTT)", a: "10152", h: "T pos" },
-                        { q: "Rosée (2SnTdTdTd)", a: "20105", h: "Td pos" }, { q: "QFE (3P0P0P0P0)", a: "30052", h: "Groupe 3" },
-                        { q: "QFF (4PPPP)", a: "40168", h: "Groupe 4" }, { q: "Tendance (5appp)", a: "57012", h: "Baisse (a=7)" },
-                        { q: "RR (6RRRtR)", a: "60025", h: "2.5mm" }, { q: "Nuages (8NhCLCMCH)", a: "85///", h: "N=5" }
-                    ]}
-                ]
-            },
-            'SHIP': { encode: [{ s: "Navire (SHIP) position 25.4N/45.2E, le 10 à 06h. Vent 220/15kt, T=25.4, Td=21.0, QFF=1012.5.", qs: [
-                { q: "Type", a: "BBXX", h: "SHIP" }, { q: "Indicatif", a: "SHIP", h: "Navire" }, { q: "YYGGi", a: "10064", h: "i=4 (m/s) ou 1(kt)" },
-                { q: "Position (99LaLaLa)", a: "99254", h: "25.4N" }, { q: "Position (QcLoLoLoLo)", a: "70452", h: "Q=7 (SE), 45.2E" },
-                { q: "Vent (Nddff)", a: "42215", h: "N=4" }, { q: "Temp (1SnTTT)", a: "10254", h: "T pos" }, { q: "Rosée (2SnTdTdTd)", a: "20210", h: "Td pos" },
-                { q: "Pression (4PPPP)", a: "40125", h: "QFF" }, { q: "Vitesse Navire (0DsVs)", a: "0///0", h: "Données inconnues" }
-            ]}]},
-            'SYNOP MOBIL': { encode: [{ s: "Station Mobile, le 05 à 12h. N=8, Vent 180/20kt, T=10.0, QFE=1000.0, Position 35.0N/10.0E.", qs: [
-                { q: "Section 0", a: "AAXX", h: "SYNOP" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "Station (IIiii)", a: "/////", h: "Mobile" },
-                { q: "Position (99LaLaLa)", a: "99350", h: "Lat 35.0" }, { q: "Position (QcLoLoLoLo)", a: "10100", h: "Q=1 (NE), Long 10.0" },
-                { q: "Vent (Nddff)", a: "81820", h: "N=8" }, { q: "Temp (1SnTTT)", a: "10100", h: "T=10.0" }, { q: "QFE (3P0P0P0P0)", a: "30000", h: "1000.0" },
-                { q: "QFF (4PPPP)", a: "40120", h: "Exemple QFF" }, { q: "Nuages", a: "88///", h: "Ciel couvert" }
-            ]}]},
-            'TEMP A': { encode: [{ s: "TEMP A Station 60715, le 05 à 12h. Sol: 1012.4hPa, T=25.0, D=5, Vent 120/10kt. 1000hPa: 110m, T=24.2, D=6.", qs: [
-                { q: "TTAA YYGGi", a: "TTAA 05121", h: "Partie A" }, { q: "Station IIiii", a: "60715", h: "Donné" }, { q: "99P0P0P0", a: "99012", h: "1012hPa" },
-                { q: "T0T0Ta0D0D0", a: "25050", h: "T=25, D=5" }, { q: "d0d0f0f0f0", a: "12010", h: "120/10" }, { q: "00hhh (1000hPa)", a: "00110", h: "110m" },
-                { q: "TTTaDD (1000hPa)", a: "24256", h: "T=24.2, D=6" }, { q: "ddfff (1000hPa)", a: "13015", h: "Ex: 130/15" }, { q: "85hhh (850hPa)", a: "85450", h: "Alt approx" }, { q: "TTTaDD (850hPa)", a: "15060", h: "Exemple T/D" }
-            ]}]},
-            'TEMP B': { encode: [{ s: "TEMP B 60715, le 05/12h. Niv Signif 1: 950hPa, T=22.0, D=4. Niv Signif 2: 880hPa, T=18.5, D=7.", qs: [
-                { q: "Identification", a: "TTBB", h: "Partie B" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "IIiii", a: "60715", h: "Donné" },
-                { q: "n0n0P0P0P0 (Sfc)", a: "00012", h: "1012hPa" }, { q: "T0T0Ta0D0D0", a: "25050", h: "T=25, D=5" }, { q: "n1n1P1P1P1", a: "11950", h: "950hPa" },
-                { q: "T1T1Ta1D1D1", a: "22054", h: "T=22, D=4" }, { q: "n2n2P2P2P2", a: "22880", h: "880hPa" }, { q: "T2T2Ta2D2D2", a: "18557", h: "T=18.5, D=7" }, { q: "n3n3P3P3P3", a: "33///", h: "Fin ou suivant" }
-            ]}]},
-            'TEMP C': { encode: [{ s: "TEMP C 60715, 05/12h. Niv 70hPa: 18450m, T=-62.5, D=10. Niv 50hPa: 20600m, T=-65.0, D=15.", qs: [
-                { q: "Identification", a: "TTCC", h: "Partie C" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "70hhh (70hPa)", a: "70845", h: "18450m" },
-                { q: "TTTaDD (70hPa)", a: "62560", h: "T=-62.5 (Sn=1), D=10" }, { q: "ddfff (70hPa)", a: "25040", h: "Ex vent" }, { q: "50hhh (50hPa)", a: "50060", h: "20600m" },
-                { q: "TTTaDD (50hPa)", a: "65165", h: "T=-65, D=15" }, { q: "ddfff (50hPa)", a: "26050", h: "Ex vent" }, { q: "88PPP (Tropo)", a: "88095", h: "Pression tropo" }, { q: "TTTaDD (Tropo)", a: "70170", h: "Temp tropo" }
-            ]}]},
-            'TEMP D': { encode: [{ s: "TEMP D 60715. Niveaux significatifs au-dessus de 100hPa. Niv 1: 85hPa, T=-68.0, D=12.", qs: [
-                { q: "Identification", a: "TTDD", h: "Partie D" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "n1n1P1P1P1", a: "11085", h: "85hPa" },
-                { q: "T1T1Ta1D1D1", a: "68162", h: "T=-68, D=12" }, { q: "n2n2P2P2P2", a: "22///", h: "Suivant" }, { q: "Tropopause", a: "88...", h: "Code 88" },
-                { q: "Vent Max", a: "77...", h: "Code 77" }, { q: "Station", a: "60715", h: "IIiii" }, { q: "Fin", a: "51515", h: "Code fin" }, { q: "Terminaison", a: "=", h: "Symbole" }
-            ]}]},
-            'PILOT A': { encode: [{ s: "PILOT A 60715. Vent Sol: 120/10. 1000hPa: 130/15. 850hPa: 150/20. 700hPa: 180/25.", qs: [
-                { q: "Identification", a: "PPAA", h: "PILOT A" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "99PPP (Sol)", a: "99012", h: "Pression sol" },
-                { q: "ddfff (Sol)", a: "12010", h: "Vent sol" }, { q: "00hhh (1000hPa)", a: "00///", h: "Standard" }, { q: "ddfff (1000hPa)", a: "13015", h: "Vent" },
-                { q: "85hhh (850hPa)", a: "85///", h: "Standard" }, { q: "ddfff (850hPa)", a: "15020", h: "Vent" }, { q: "70hhh (700hPa)", a: "70///", h: "Standard" }, { q: "ddfff (700hPa)", a: "18025", h: "Vent" }
-            ]}]},
-            'PILOT B': { encode: [{ s: "PILOT B 60715. Vents aux altitudes: 300m: 140/10. 600m: 150/15. 900m: 160/20.", qs: [
-                { q: "Identification", a: "PPBB", h: "PILOT B" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "9tne1e2e3", a: "90012", h: "Altitudes fixes" },
-                { q: "ddfff (300m)", a: "14010", h: "Niveau 1" }, { q: "ddfff (600m)", a: "15015", h: "Niveau 2" }, { q: "ddfff (900m)", a: "16020", h: "Niveau 3" },
-                { q: "9tne1e2e3 (Suite)", a: "91345", h: "Niveaux suivants" }, { q: "Station", a: "60715", h: "IIiii" }, { q: "Section 4", a: "44...", h: "Vents max" }, { q: "Fin", a: "=", h: "Symbole" }
-            ]}]},
-            'PILOT C': { encode: [{ s: "PILOT C 60715. Vents niveaux standards au-dessus 100hPa. 70hPa: 250/40. 50hPa: 260/50.", qs: [
-                { q: "Identification", a: "PPCC", h: "PILOT C" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "70hhh (70hPa)", a: "70///", h: "Vent seul" },
-                { q: "ddfff (70hPa)", a: "25040", h: "Donné" }, { q: "50hhh (50hPa)", a: "50///", h: "Vent seul" }, { q: "ddfff (50hPa)", a: "26050", h: "Donné" },
-                { q: "30hhh (30hPa)", a: "30///", h: "Vent seul" }, { q: "ddfff (30hPa)", a: "27060", h: "Exemple" }, { q: "Station", a: "60715", h: "IIiii" }, { q: "Fin", a: "=", h: "Symbole" }
-            ]}]},
-            'PILOT D': { encode: [{ s: "PILOT D 60715. Vents niveaux significatifs au-dessus 100hPa.", qs: [
-                { q: "Identification", a: "PPDD", h: "PILOT D" }, { q: "YYGGi", a: "05121", h: "Donné" }, { q: "9tne1e2e3", a: "9...", h: "Altitudes" },
-                { q: "ddfff (Niv 1)", a: "28070", h: "Exemple" }, { q: "ddfff (Niv 2)", a: "29080", h: "Exemple" }, { q: "Section 4", a: "44...", h: "Vent max" },
-                { q: "Station", a: "60715", h: "IIiii" }, { q: "Section 3", a: "33...", h: "Données" }, { q: "Code fin", a: "51515", h: "Fin" }, { q: "Symbole", a: "=", h: "Fin" }
-            ]}]},
-            'CLIMAT': { encode: [{ s: "CLIMAT Station 60715, Janvier 2024. T.Moy=18.5, P.Moy=1012.5, RR.Tot=45mm.", qs: [
-                { q: "Identification", a: "CLIMAT", h: "Titre" }, { q: "Période (YYYYMM)", a: "202401", h: "Janv 2024" }, { q: "Station (IIiii)", a: "60715", h: "Donné" },
-                { q: "Section 1 (111)", a: "111", h: "Données" }, { q: "Temp (sTTT)", a: "0185", h: "18.5" }, { q: "Pression (PPPP)", a: "0125", h: "1012.5" },
-                { q: "Section 4 (444)", a: "444", h: "RR" }, { q: "Précip (RRRR)", a: "0045", h: "45mm" }, { q: "Section 6 (666)", a: "666", h: "Jours" }, { q: "Nombre jours", a: "008", h: "Ex: 8 j" }
-            ]}]}
-        };
+        <h2 id="textHint">Haz clic abajo para descubrirlo...</h2>
 
-        const MeteoTrainer = () => {
-            const [type, setType] = useState('SYNOP');
-            const [mode, setMode] = useState('encode');
-            const [ex, setEx] = useState(null);
-            const [ans, setAns] = useState({});
-            const [show, setShow] = useState(false);
-            const [score, setScore] = useState({ c: 0, t: 0 });
+        <button onclick="revelarAmor()">Click aquí para conocerla</button>
+    </div>
 
-            const start = () => {
-                const data = db[type] || db['SYNOP'];
-                const list = data[mode] || data['decode'] || data['encode'];
-                setEx(list[Math.floor(Math.random() * list.length)]);
-                setAns({});
-                setShow(false);
-            };
-
-            const check = () => {
-                let count = 0;
-                ex.qs.forEach((q, i) => {
-                    const u = (ans[i] || '').toLowerCase().trim().replace(/\s/g, '');
-                    const a = q.a.toLowerCase().trim().replace(/\s/g, '');
-                    if (u === a || (a.includes(u) && u.length > 2)) count++;
-                });
-                setScore(s => ({ c: s.c + count, t: s.t + 10 }));
-                setShow(true);
-            };
-
-            return (
-                <div className="max-w-5xl mx-auto p-4 md:p-10">
-                    <header className="bg-indigo-700 p-8 rounded-t-3xl text-center shadow-2xl border-b-4 border-indigo-900">
-                        <h1 className="text-4xl font-black italic tracking-tighter">METEO-TRAINER ELITE</h1>
-                        <p className="text-indigo-200 font-bold mt-2 uppercase text-xs tracking-[0.3em]">Spécialiste Codes OMM</p>
-                    </header>
-
-                    <div className="bg-slate-800 p-6 md:p-10 rounded-b-3xl shadow-2xl border border-slate-700">
-                        <div className="flex flex-wrap gap-4 mb-10 bg-slate-900/80 p-5 rounded-2xl border border-slate-700">
-                            <div className="flex-1 min-w-[250px]">
-                                <label className="text-[10px] uppercase font-black text-indigo-400 mb-1 block">Module de Message</label>
-                                <select className="w-full bg-slate-800 border border-slate-600 p-3 rounded-lg font-bold text-white outline-none focus:border-indigo-500" value={type} onChange={e => setType(e.target.value)}>
-                                    <optgroup label="Surface">
-                                        <option>SYNOP</option>
-                                        <option>SHIP</option>
-                                        <option>SYNOP MOBIL</option>
-                                    </optgroup>
-                                    <optgroup label="Radiosondage (TEMP)">
-                                        <option>TEMP A</option>
-                                        <option>TEMP B</option>
-                                        <option>TEMP C</option>
-                                        <option>TEMP D</option>
-                                    </optgroup>
-                                    <optgroup label="Vent en Altitude (PILOT)">
-                                        <option>PILOT A</option>
-                                        <option>PILOT B</option>
-                                        <option>PILOT C</option>
-                                        <option>PILOT D</option>
-                                    </optgroup>
-                                    <optgroup label="Climatologie">
-                                        <option>CLIMAT</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-                            
-                            <div className="flex-1 min-w-[200px]">
-                                <label className="text-[10px] uppercase font-black text-indigo-400 mb-1 block">Mode</label>
-                                <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-600">
-                                    <button onClick={() => setMode('decode')} className={`flex-1 py-2 rounded font-bold transition ${mode==='decode'?'bg-indigo-600 text-white':'text-slate-500'}`}>Décodage</button>
-                                    <button onClick={() => setMode('encode')} className={`flex-1 py-2 rounded font-bold transition ${mode==='encode'?'bg-indigo-600 text-white':'text-slate-500'}`}>Encodage</button>
-                                </div>
-                            </div>
-
-                            <button onClick={start} className="bg-green-600 px-10 py-3 rounded-xl font-black hover:bg-green-500 transition self-end shadow-lg uppercase">Générer l'énoncé</button>
-                        </div>
-
-                        {ex ? (
-                            <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
-                                <div className="bg-indigo-950/40 p-8 rounded-2xl border-l-8 border-indigo-500 mb-10 shadow-inner">
-                                    <h2 className="text-indigo-400 text-sm font-black mb-3 uppercase tracking-widest italic">Situation à coder :</h2>
-                                    <p className="text-2xl font-serif leading-relaxed text-white drop-shadow-md">
-                                        {mode === 'decode' ? ex.m : ex.s}
-                                    </p>
-                                </div>
-
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    {ex.qs.map((q, i) => (
-                                        <div key={i} className="bg-slate-700/40 p-5 rounded-2xl border border-slate-700 focus-within:border-indigo-500 transition shadow-sm group">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase mb-3 group-focus-within:text-indigo-400">Groupe OMM {i+1} : {q.q}</p>
-                                            <input 
-                                                className="w-full bg-slate-900 border-2 border-slate-700 p-4 rounded-xl outline-none focus:border-green-400 transition font-mono text-xl tracking-[0.2em] text-green-400" 
-                                                value={ans[i]||''} 
-                                                onChange={e => setAns({...ans, [i]:e.target.value})} 
-                                                disabled={show}
-                                                placeholder="_____"
-                                            />
-                                            {show && (
-                                                <div className="mt-4 p-3 bg-slate-900/80 rounded-lg border-l-2 border-green-500">
-                                                    <p className="text-green-400 font-black text-sm uppercase underline mb-1">Correct : {q.a}</p>
-                                                    <p className="text-slate-500 text-[11px] italic leading-tight">{q.h}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-16 flex flex-col items-center border-t border-slate-700 pt-10">
-                                    {!show ? (
-                                        <button onClick={check} className="bg-indigo-600 hover:bg-indigo-500 text-white px-20 py-5 rounded-full font-black text-2xl shadow-2xl transition hover:scale-105 uppercase tracking-tighter">Valider l'encodage</button>
-                                    ) : (
-                                        <div className="text-center">
-                                            <div className="text-7xl font-black text-green-400 mb-6 drop-shadow-2xl italic tracking-tighter">SCORE: {score.c}/{score.t}</div>
-                                            <button onClick={start} className="bg-white text-slate-900 px-16 py-4 rounded-full font-black text-xl hover:bg-slate-200 transition shadow-xl uppercase">Énoncé Suivant</button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-32 border-2 border-dashed border-slate-700 rounded-3xl opacity-20">
-                                <p className="text-4xl font-black italic tracking-widest">SÉLECTIONNEZ UN MODULE</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<MeteoTrainer />);
+    <script>
+        /* JAVASCRIPT: La interactividad */
+        function revelarAmor() {
+            const img = document.getElementById('loveImage');
+            const hint = document.getElementById('textHint');
+            
+            // Mostrar la imagen con animación
+            img.style.display = 'inline-block';
+            img.classList.add('fade-in');
+            
+            // Cambiar el texto
+            hint.innerHTML = "<strong>¡Aquí la tienes! ❤️</strong>";
+            
+            // Ocultar el botón después de clicar
+            event.target.style.display = 'none';
+        }
     </script>
+
 </body>
 </html>
