@@ -184,6 +184,32 @@
             50% { transform: translateY(-10px); }
         }
 
+        .back-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+
+        .back-button:active {
+            transform: translateY(-1px);
+        }
+
         @media (max-width: 768px) {
             .sasuke-img {
                 max-width: 300px;
@@ -201,6 +227,11 @@
             .question-container {
                 padding: 40px 25px;
             }
+
+            .back-button {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -210,8 +241,7 @@
         <div class="particles" id="particles1"></div>
         <div class="content">
             <div class="image-container">
-                <a href='https://postimg.cc/14mx47Rp' target='_blank'><img src='https://i.postimg.cc/Y2gtnTJy/itachi-sharingan-look-down-bouso6qi0g04jykz.jpg' border='0' alt='itachi-sharingan-look-down-bouso6qi0g04jykz' class="sasuke-img"></a>
-                <!-- <img src="https://i.ibb.co/HTLcs0sk/itachi-sharingan-look-down-bouso6qi0g04jykz.jpg" alt="Itachi Sharingan" class="sasuke-img"> -->
+                <img src='https://i.postimg.cc/Y2gtnTJy/itachi-sharingan-look-down-bouso6qi0g04jykz.jpg' alt='itachi-sharingan-look-down-bouso6qi0g04jykz' class="sasuke-img">
             </div>
             <div class="button-container">
                 <p class="click-hint">👇 Haz clic aquí 👇</p>
@@ -231,6 +261,9 @@
                     ¿Cuándo quieres empezar a programar para hacer este tipo de cosas tan chulas?
                 </div>
                 <span class="emoji">💻⚡🚀</span>
+                <button class="back-button" onclick="goBack()">
+                    ← Volver
+                </button>
             </div>
         </div>
     </div>
@@ -257,7 +290,12 @@
             document.getElementById('page1').style.display = 'none';
             document.getElementById('page2').style.display = 'flex';
         }
+
+        // Volver a la página anterior
+        function goBack() {
+            document.getElementById('page2').style.display = 'none';
+            document.getElementById('page1').style.display = 'flex';
+        }
     </script>
 </body>
 </html>
-
