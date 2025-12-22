@@ -1,2 +1,2 @@
-# Exercice_meteo
-Exercices des formes symboliques des messages meteo
+# Para_muestras
+Para las muestras
